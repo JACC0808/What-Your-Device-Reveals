@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What your device reveals</title>
+<!--
+  ============================================================
+  EDUCATIONAL "SELF-TRACKING" DEMO
+  ============================================================
+  Esta página te muestra a TI MISMO qué información entrega tu
+  navegador con solo abrir una web. Todo se lee localmente en tu
+  dispositivo y se muestra en pantalla.
+
+  Único dato que sale del dispositivo: para mostrar tu IP y ciudad,
+  la página consulta un servicio PÚBLICO y gratuito (ipapi.co) que
+  simplemente te devuelve TU PROPIA información. No se envía nada
+  tuyo a ningún servidor mío; no hay backend propio. Si no hay
+  internet, esa parte muestra "unavailable" y el resto funciona igual.
+
+  Uso previsto: proyectar en clase y rastrearte a ti mismo con
+  tu consentimiento. No rastrea a la audiencia.
+  ============================================================
+-->
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --panel: #131a2e;
+    --line: #26304d;
+    --text: #e6ebf5;
+    --muted: #7d8bb0;
+    --accent: #ff5c7c;
+    --accent2: #38e8c6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Courier New", monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 32px 20px;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; }
+  header { margin-bottom: 8px; }
+  h1 {
+    font-family: Arial, sans-serif;
+    font-size: 1.9rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  h1 .blink { color: var(--accent); }
+  .sub {
+    font-family: Arial, sans-serif;
+    color: var(--muted);
+    font-size: 1rem;
+    margin-bottom: 26px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  @media (max-width: 620px) { .grid { grid-template-columns: 1fr; } }
+  .item {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .item .label {
+    font-family: Arial, sans-serif;
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .item .value {
+    font-size: 1.15rem;
+    color: var(--accent2);
+    word-break: break-word;
+  }
+  .item.big { grid-column: 1 / -1; }
+  .item.big .value { font-size: 1.5rem; color: var(--accent); }
+  .footnote {
+    font-family: Arial, sans-serif;
+    margin-top: 26px;
+    padding: 16px 18px;
+    background: #101830;
+    border-left: 3px solid var(--accent2);
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: .92rem;
+  }
+  .footnote strong { color: var(--text); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>whoami<span class="blink">_</span></h1>
+    <p class="sub">You just opened a normal web page. Here's what it learned about you — instantly, without asking.</p>
+  </header>
+
+  <div class="grid">
+    <div class="item big">
+      <div class="label">Your public IP address</div>
+      <div class="value" id="ip">reading…</div>
+    </div>
+    <div class="item big">
+      <div class="label">Approximate location</div>
+      <div class="value" id="loc">reading…</div>
+    </div>
+    <div class="item">
+      <div class="label">Internet provider</div>
+      <div class="value" id="isp">reading…</div>
+    </div>
+    <div class="item">
+      <div class="label">Timezone</div>
+      <div class="value" id="tz">reading…</div>
+    </div>
+    <div class="item">
+      <div class="label">Device / OS</div>
+      <div class="value" id="os">reading…</div>
+    </div>
+    <div class="item">
+      <div class="label">Browser</div>
+      <div class="value" id="browser">reading…</div>
+    </div>
+    <div class="item">
+      <div class="label">Screen size</div>
+      <div class="value" id="screen">reading…</div>
+    </div>
+    <div class="item">
+      <div class="label">Language</div>
+      <div class="value" id="lang">reading…</div>
+    </div>
+    <div class="item">
+      <div class="label">Battery level</div>
+      <div class="value" id="battery">reading…</div>
+    </div>
+    <div class="item">
+      <div class="label">CPU cores</div>
+      <div class="value" id="cores">reading…</div>
+    </div>
+  </div>
+
+  <div class="footnote">
+    <strong>You didn't type any of this.</strong> Your device shared it automatically,
+    in one second. Now imagine what every app and website you use collects about you
+    every day. — This is a classroom demo: your data stays on this screen and is not stored.
+  </div>
+</div>
+
+<script>
+  // --- Everything below reads LOCAL browser info and shows it on screen. ---
+
+  // Language
+  document.getElementById('lang').textContent = navigator.language || 'unknown';
+
+  // Screen
+  document.getElementById('screen').textContent = window.screen.width + " × " + window.screen.height + " px";
+
+  // CPU cores
+  document.getElementById('cores').textContent = (navigator.hardwareConcurrency || '?') + " cores";
+
+  // Timezone
+  try {
+    document.getElementById('tz').textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  } catch(e) { document.getElementById('tz').textContent = 'unknown'; }
+
+  // OS + Browser (simple parse of the user-agent string)
+  const ua = navigator.userAgent;
+  function detectOS(ua){
+    if (/Windows/i.test(ua)) return "Windows";
+    if (/Android/i.test(ua)) return "Android";
+    if (/iPhone|iPad|iPod/i.test(ua)) return "iOS (Apple)";
+    if (/Mac OS X/i.test(ua)) return "macOS";
+    if (/Linux/i.test(ua)) return "Linux";
+    return "unknown";
+  }
+  function detectBrowser(ua){
+    if (/Edg\//i.test(ua)) return "Microsoft Edge";
+    if (/OPR\//i.test(ua) || /Opera/i.test(ua)) return "Opera";
+    if (/Chrome\//i.test(ua)) return "Chrome";
+    if (/Firefox\//i.test(ua)) return "Firefox";
+    if (/Safari\//i.test(ua)) return "Safari";
+    return "unknown";
+  }
+  document.getElementById('os').textContent = detectOS(ua);
+  document.getElementById('browser').textContent = detectBrowser(ua);
+
+  // Battery (not supported on all browsers)
+  if (navigator.getBattery) {
+    navigator.getBattery().then(function(b){
+      document.getElementById('battery').textContent =
+        Math.round(b.level * 100) + "%" + (b.charging ? " (charging)" : "");
+    }).catch(function(){
+      document.getElementById('battery').textContent = "unavailable";
+    });
+  } else {
+    document.getElementById('battery').textContent = "not exposed by this browser";
+  }
+
+  // IP + location: asks a PUBLIC service that returns YOUR OWN info.
+  // Primary: ipwho.is  ·  Fallback: ipapi.co
+  function fillNet(d){
+    document.getElementById('ip').textContent  = d.ip || 'unavailable';
+    var city = d.city, region = (d.region || d.region_name), country = (d.country || d.country_name);
+    document.getElementById('loc').textContent = [city, region, country].filter(Boolean).join(", ") || 'unavailable';
+    document.getElementById('isp').textContent = (d.connection && d.connection.isp) || d.org || d.isp || 'unavailable';
+    var tz = (d.timezone && d.timezone.id) ? d.timezone.id : (typeof d.timezone === 'string' ? d.timezone : null);
+    if (tz) document.getElementById('tz').textContent = tz;
+  }
+  function netFailed(){
+    document.getElementById('ip').textContent  = "unavailable (network blocked?)";
+    document.getElementById('loc').textContent = "unavailable";
+    document.getElementById('isp').textContent = "unavailable";
+  }
+  fetch('https://ipwho.is/')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d && d.success === false) throw new Error('ipwho failed');
+      fillNet(d);
+    })
+    .catch(function(){
+      // fallback
+      fetch('https://ipapi.co/json/')
+        .then(function(r){ return r.json(); })
+        .then(fillNet)
+        .catch(netFailed);
+    });
+</script>
+</body>
+</html>
